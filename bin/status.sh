@@ -12,11 +12,7 @@ if curl -sf http://127.0.0.1:11434/api/tags >/dev/null; then
   ollama list 2>/dev/null || true
   ollama ps 2>/dev/null || true
 else
-  echo "API: down"
+  echo "API: down (ollama serve)"
 fi
-echo "=== Docker / OpenHands ==="
-if docker_ok; then
-  docker compose --env-file "$ROOT/config/hardware.env" -f "$ROOT/docker-compose.yml" ps || true
-else
-  echo "Docker: sin permiso"
-fi
+echo "=== Modelo configurado ==="
+echo "${LOCAL_OLLAMA_MODEL:-?}"

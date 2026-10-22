@@ -1,49 +1,38 @@
 # openhands-security-audit
 
-Agente de **auditoría de seguridad defensiva** para PC locales modestos (p. ej. Intel N100 · ~8 GiB · sin GPU).
+Agente **local** de auditoría de seguridad **defensiva** (Python + Ollama). Sin Docker.
 
-## Modo recomendado: local (sin Docker)
+Calibrado para PCs modestos (p. ej. Intel N100 · ~8 GiB · sin GPU).
 
-Python 3 + [Ollama](https://ollama.com). Sin contenedores, menos RAM, listo en este equipo.
+## Uso
 
 ```bash
-cd ~/Dv/openhands-security-audit   # o tu clone
-./install.sh                       # symlinks + comprueba Ollama
+git clone https://github.com/fernandoog/openhands-security-audit.git
+cd openhands-security-audit
+./install.sh
 ./bin/audit-local.sh /ruta/al/proyecto
-# solo heurísticas (sin LLM):
-./bin/audit-fast.sh /ruta/al/proyecto
+./bin/audit-fast.sh /ruta/al/proyecto    # sin LLM
 ```
+
+Tras instalar: `oh-audit`, `oh-audit-fast`, `oh-audit-status`.
 
 Informes en `reports/AUDIT-*.md`.
 
 | Comando | Qué hace |
 |---------|----------|
-| `./bin/audit-local.sh [dir]` | **Híbrido**: escaneo local + narración Ollama |
-| `./bin/audit-fast.sh [dir]` | Solo heurísticas (sin LLM) |
-| `./bin/audit-local.sh [dir] --react` | Bucle ReAct (mejor con qwen coder) |
-| `oh-audit` / `oh-audit-fast` | Igual, tras `install.sh` |
+| `audit-local.sh` | Escaneo determinista + narración Ollama |
+| `audit-fast.sh` | Solo heurísticas |
+| `audit-local.sh --react` | Bucle ReAct (mejor con qwen coder) |
 
-Sin Docker: las herramientas corren en el host; el LLM solo redacta el informe. Modelo: **`dolphin-phi`**. Con `qwen2.5-coder:1.5b` mejora (`LOCAL_OLLAMA_MODEL` en `config/hardware.env`).
+Modelo por defecto: `dolphin-phi`. Opcional: `qwen2.5-coder:1.5b` en `config/hardware.env`.
 
-### Requisitos (modo local)
+## Requisitos
 
-- Linux
-- `python3`, `curl`
-- Ollama en marcha (`ollama serve`)
-
-No hace falta Docker ni grupo `docker`.
-
-## Modo opcional: OpenHands (Docker)
-
-Más capaz, pero pesado en 8 GiB. Ver `MANUAL.md` sección Docker.
-
-```bash
-./bin/start.sh   # requiere Docker + Ollama en 0.0.0.0:11434
-```
+- Linux, `python3`, `curl`, [Ollama](https://ollama.com)
 
 ## Ética
 
-Solo en sistemas/repos que administras o con autorización. **Defensa** (revisión, secretos, misconfigs, remediación): no exploits ni PoCs.
+Solo en repos/sistemas que administras. Defensa (secretos, misconfigs, remediación): no exploits.
 
 ## Licencia
 
