@@ -1,0 +1,12 @@
+.env
+.env.local
+*.log
+reports/*.md
+!reports/.gitkeep
+!reports/TEMPLATE.md
+.openhands-state/
+workspace/
+.cache/
+*.pyc
+__pycache__/
+.DS_Store

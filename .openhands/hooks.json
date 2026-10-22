@@ -1,0 +1,36 @@
+{
+  "pre_tool_use": [
+    {
+      "matcher": "terminal",
+      "hooks": [
+        {
+          "command": ".openhands/hooks/block_offensive.sh",
+          "timeout": 10
+        }
+      ]
+    }
+  ],
+  "post_tool_use": [
+    {
+      "matcher": "*",
+      "hooks": [
+        {
+          "command": ".openhands/hooks/log_tools.sh",
+          "timeout": 5,
+          "async": true
+        }
+      ]
+    }
+  ],
+  "stop": [
+    {
+      "matcher": "*",
+      "hooks": [
+        {
+          "command": ".openhands/hooks/require_report_hint.sh",
+          "timeout": 15
+        }
+      ]
+    }
+  ]
+}

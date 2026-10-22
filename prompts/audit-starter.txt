@@ -1,0 +1,8 @@
+Quiero una auditoría DEFENSIVA del workspace actual.
+
+Reglas:
+- Solo hallazgos + remediación. Sin exploits, PoCs ofensivos ni payloads.
+- Inventario breve → hallazgos con severidad y evidencia (ruta:línea) → remediación.
+- Al final genera reports/AUDIT-YYYYMMDD-HHMM.md con reports/TEMPLATE.md.
+
+Empieza por el inventario del proyecto.

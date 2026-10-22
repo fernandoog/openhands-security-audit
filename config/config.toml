@@ -1,0 +1,41 @@
+# Configuración de referencia para OpenHands (CLI / headless).
+# La UI web puede sobrescribir estos valores desde Settings → LLM → Advanced.
+
+[core]
+workspace_base = "./workspace"
+cache_dir = "./.cache"
+enable_browser = false
+max_iterations = 40
+max_budget_per_task = 0
+
+[llm]
+model = "openai/qwen2.5-coder:1.5b"
+base_url = "http://host.docker.internal:11434/v1"
+api_key = "local-llm"
+temperature = 0.1
+timeout = 600
+num_retries = 4
+caching_prompt = false
+disable_vision = true
+drop_params = true
+max_output_tokens = 2048
+
+[agent]
+enable_browsing = false
+enable_jupyter = false
+enable_llm_editor = false
+enable_editor = true
+enable_cmd = true
+enable_think = true
+enable_finish = true
+enable_prompt_extensions = true
+enable_history_truncation = true
+
+[security]
+confirmation_mode = true
+security_analyzer = "llm"
+enable_security_analyzer = true
+
+[sandbox]
+timeout = 120
+user_id = 1000

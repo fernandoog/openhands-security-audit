@@ -1,0 +1,30 @@
+# OpenHands UI + sandbox, pensado para N100 / ~8 GiB RAM.
+# Requiere: Docker, usuario en grupo `docker`, Ollama en el host (ver bin/start-ollama.sh).
+
+name: openhands-security-audit
+
+services:
+  openhands:
+    image: ${OPENHANDS_IMAGE:-docker.openhands.dev/openhands/openhands:1.8}
+    container_name: openhands-security-audit
+    pull_policy: always
+    ports:
+      - "${OPENHANDS_PORT:-3000}:3000"
+    environment:
+      - LOG_ALL_EVENTS=true
+      - AGENT_SERVER_IMAGE_REPOSITORY=${AGENT_SERVER_IMAGE_REPOSITORY:-ghcr.io/openhands/agent-server}
+      - AGENT_SERVER_IMAGE_TAG=${AGENT_SERVER_IMAGE_TAG:-1.26.0-python}
+      - LLM_MODEL=${LLM_MODEL:-openai/qwen2.5-coder:1.5b}
+      - LLM_BASE_URL=${LLM_BASE_URL:-http://host.docker.internal:11434/v1}
+      - LLM_API_KEY=${LLM_API_KEY:-local-llm}
+      - SANDBOX_TIMEOUT=120
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${HOME}/.openhands:/.openhands
+      - ./:/workspace/project:rw
+      - ./config/config.toml:/.openhands/config.toml:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    mem_limit: ${OPENHANDS_MEMORY:-2g}
+    cpus: ${OPENHANDS_CPUS:-2}
+    restart: unless-stopped
