@@ -6,7 +6,7 @@
 | Alcance | ruta / repo |
 | Autorización | sí / no |
 | Modelo | qwen2.5-coder:1.5b (local) |
-| Auditor | OpenHands + openhands-security-audit |
+| Auditor | oh-audit (local / Ollama) |
 
 ## Resumen ejecutivo
 
