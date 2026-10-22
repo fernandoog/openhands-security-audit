@@ -1,81 +1,70 @@
-# Manual · openhands-security-audit
+# Manual
 
-## 1. Preparar Docker
+## A) Agente local sin Docker (recomendado)
+
+### 1. Ollama
 
 ```bash
-sudo usermod -aG docker "$USER"
-# Cierra sesión gráfica o:
-newgrp docker
-docker ps   # debe funcionar sin sudo
+ollama serve          # si no está ya
+ollama list           # debe listar al menos dolphin-phi o qwen2.5-coder:1.5b
 ```
 
-## 2. Instalar
+### 2. Auditar
 
 ```bash
-cd ~/Dv/openhands-security-audit   # o tu clone
-./install.sh
+cd ~/Dv/openhands-security-audit
+./bin/audit-local.sh .
+./bin/audit-local.sh ~/Dv/otro-proyecto --steps 8
+./bin/audit-fast.sh ~/Dv/otro-proyecto
 ```
 
-Descarga `qwen2.5-coder:1.5b` y crea symlinks en `~/.local/bin`.
+### 3. Qué hace el agente (modo híbrido, por defecto)
 
-## 3. Ollama en 0.0.0.0
+1. Escaneo determinista en el host: inventario, secretos, configs, permisos.
+2. (Opcional) Una llamada a Ollama para narrar el informe.
+3. Escribe `reports/AUDIT-YYYYMMDD-HHMM.md`.
+4. `--fast` / `--no-llm`: sin Ollama. `--react`: bucle Thought/Action (modelos mejores).
 
-Si `ss -tlnp | grep 11434` muestra solo `127.0.0.1`, Docker no alcanzará el LLM.
+Comandos ofensivos quedan bloqueados en la allowlist de `run_safe`.
 
-1. Para el proceso/servicio actual de Ollama.
-2. Arranca:
+### 4. Modelos en N100 / 8 GiB
+
+| Modelo | Notas |
+|--------|--------|
+| `dolphin-phi` | Por defecto ahora; ctx 2k; lento pero cabe |
+| `qwen2.5-coder:1.5b` | Mejor para código; `ollama pull qwen2.5-coder:1.5b` |
+| `qwen2.5-coder:3b` | Solo si cierras apps y tienes margen de RAM |
+
+Edita `LOCAL_OLLAMA_MODEL` y `LOCAL_CONTEXT_LENGTH` en `config/hardware.env`.
+
+### 5. Flags útiles
 
 ```bash
-source ~/.config/openhands-security-audit.env
-ollama serve
+./bin/audit-local.sh . --fast
+./bin/audit-local.sh . --model dolphin-phi:latest --ctx 2048 --steps 6
+./bin/audit-local.sh . --goal "Busca secretos y revisa Dockerfiles"
 ```
 
-O deja que `./bin/start-ollama.sh` lo intente (si el puerto está libre).
+---
 
-## 4. Arrancar el agente
+## B) OpenHands con Docker (opcional)
 
 ```bash
+sudo usermod -aG docker "$USER" && newgrp docker
+# Ollama en 0.0.0.0:11434
 ./bin/start.sh
-# o: oh-security-start
+# UI http://localhost:3000
 ```
 
-Espera a que la UI responda en http://localhost:3000.
+Detalles LLM en el README antiguo / `config/hardware.env` (bloque OpenHands).
 
-## 5. Configurar LLM en la UI
+---
 
-*Settings → see advanced settings → Advanced ON*:
+## Problemas
 
-- Custom Model: `openai/qwen2.5-coder:1.5b`
-- Base URL: `http://host.docker.internal:11434/v1`
-- API Key: `local-llm`
-
-Guarda. Abre conversación nueva.
-
-## 6. Auditar un proyecto
-
-1. El compose monta **este** repo en `/workspace/project`.
-2. Para auditar otro código: cópialo/clónalo dentro de `workspace/` o cambia el volumen en `docker-compose.yml`.
-3. Usa el prompt de `prompts/audit-starter.txt`.
-4. Revisa `reports/AUDIT-*.md`.
-
-## 7. Parar
-
-```bash
-./bin/stop.sh
-```
-
-Ollama puede seguir en marcha (útil para no recargar el modelo).
-
-## 8. Problemas frecuentes
-
-| Síntoma | Qué mirar |
+| Síntoma | Qué hacer |
 |---------|-----------|
-| `permission denied` docker.sock | Grupo `docker` + nueva sesión |
-| LLM timeout / connection refused | Ollama en `0.0.0.0`, `curl` desde el contenedor |
-| Agente “tonto” / no usa tools | Contexto demasiado bajo o modelo inadecuado; no uses `dolphin-phi` |
-| Swap thrashing / muy lento | Cierra navegadores; baja a 1.5b; reduce `OPENHANDS_MEMORY` |
-| OOM killer | Baja `OLLAMA_CONTEXT_LENGTH` a 12288 en `config/hardware.env` |
-
-## 9. Subir de perfil
-
-Si amplías RAM/GPU, ejecuta `./bin/detect-hardware.sh` y actualiza `OLLAMA_MODEL` / `OLLAMA_CONTEXT_LENGTH` en `config/hardware.env`.
+| Ollama connection refused | `ollama serve` |
+| Muy lento | `--fast` o modelo 1.5b; cierra Chrome |
+| Informe vacío de calidad | Modelo débil: usa `--fast` + revisión manual |
+| Comando bloqueado | Es la allowlist defensiva; no uses herramientas ofensivas |

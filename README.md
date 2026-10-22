@@ -1,94 +1,50 @@
 # openhands-security-audit
 
-Agente **local** [OpenHands](https://github.com/OpenHands/OpenHands) orientado a **auditorías de seguridad defensivas**, calibrado para hardware modesto:
+Agente de **auditoría de seguridad defensiva** para PC locales modestos (p. ej. Intel N100 · ~8 GiB · sin GPU).
 
-| Recurso | Perfil de este repo |
-|---------|---------------------|
-| CPU | Intel N100 (4 núcleos) / genérico ≤8 GiB |
-| RAM | ~8 GiB (sin GPU NVIDIA usable) |
-| LLM | Ollama `qwen2.5-coder:1.5b`, contexto **16k** |
-| UI | OpenHands Docker `:3000` |
+## Modo recomendado: local (sin Docker)
 
-No genera exploits ni PoCs ofensivos. Hooks y skills limitan el alcance a inventario, hallazgos, remediación e informes.
-
-## Requisitos
-
-- Linux (probado en Omarchy/Arch)
-- [Ollama](https://ollama.com)
-- Docker + Compose (usuario en grupo `docker`)
-- ~3 GiB libres en disco para modelo + imagen
-
-## Instalación rápida
+Python 3 + [Ollama](https://ollama.com). Sin contenedores, menos RAM, listo en este equipo.
 
 ```bash
-git clone https://github.com/fernandoog/openhands-security-audit.git
-cd openhands-security-audit
-./install.sh
-./bin/start.sh
+cd ~/Dv/openhands-security-audit   # o tu clone
+./install.sh                       # symlinks + comprueba Ollama
+./bin/audit-local.sh /ruta/al/proyecto
+# solo heurísticas (sin LLM):
+./bin/audit-fast.sh /ruta/al/proyecto
 ```
 
-Abre **http://localhost:3000**. En *Settings → LLM → Advanced*:
+Informes en `reports/AUDIT-*.md`.
 
-| Campo | Valor |
-|-------|--------|
-| Custom Model | `openai/qwen2.5-coder:1.5b` |
-| Base URL | `http://host.docker.internal:11434/v1` |
-| API Key | `local-llm` |
+| Comando | Qué hace |
+|---------|----------|
+| `./bin/audit-local.sh [dir]` | **Híbrido**: escaneo local + narración Ollama |
+| `./bin/audit-fast.sh [dir]` | Solo heurísticas (sin LLM) |
+| `./bin/audit-local.sh [dir] --react` | Bucle ReAct (mejor con qwen coder) |
+| `oh-audit` / `oh-audit-fast` | Igual, tras `install.sh` |
 
-Pega el contenido de `prompts/audit-starter.txt` para iniciar una auditoría.
+Sin Docker: las herramientas corren en el host; el LLM solo redacta el informe. Modelo: **`dolphin-phi`**. Con `qwen2.5-coder:1.5b` mejora (`LOCAL_OLLAMA_MODEL` en `config/hardware.env`).
 
-## Comandos
+### Requisitos (modo local)
 
-| Script | Función |
-|--------|---------|
-| `./bin/detect-hardware.sh` | Detecta CPU/RAM/GPU y recomienda modelo |
-| `./bin/start-ollama.sh` | Ollama + pull/precarga del modelo |
-| `./bin/start.sh` | Ollama + OpenHands (compose) |
-| `./bin/stop.sh` | Para OpenHands |
-| `./bin/status.sh` | Estado hardware / Ollama / contenedor |
+- Linux
+- `python3`, `curl`
+- Ollama en marcha (`ollama serve`)
 
-Tras `./install.sh` también: `oh-security-start`, `oh-security-stop`, `oh-security-status`.
+No hace falta Docker ni grupo `docker`.
 
-## Por qué este modelo
+## Modo opcional: OpenHands (Docker)
 
-OpenHands pide contexto ≥22k con modelos grandes (p. ej. Qwen3.6-35B), pensados para **≥24 GB VRAM**. En N100/8 GiB eso no cabe.
-
-| Modelo | Uso |
-|--------|-----|
-| `qwen2.5-coder:1.5b` | **Por defecto** — cabe en RAM con Docker |
-| `qwen2.5-coder:3b` | Si tienes ≥12 GiB o cierras todo lo demás |
-| `dolphin-phi` | **No** — contexto 2k, insuficiente para OpenHands |
-
-Ajusta `config/hardware.env` y vuelve a `./bin/start.sh`.
-
-## Ollama visible desde Docker
-
-Ollama debe escuchar en `0.0.0.0:11434`, no solo `127.0.0.1`:
+Más capaz, pero pesado en 8 GiB. Ver `MANUAL.md` sección Docker.
 
 ```bash
-source ~/.config/openhands-security-audit.env   # tras install.sh
-# o:
-OLLAMA_HOST=0.0.0.0:11434 OLLAMA_CONTEXT_LENGTH=16384 ollama serve
+./bin/start.sh   # requiere Docker + Ollama en 0.0.0.0:11434
 ```
-
-Comprueba desde el contenedor:
-
-```bash
-docker exec openhands-security-audit curl -s http://host.docker.internal:11434/v1/models
-```
-
-## Personalización OpenHands
-
-- `AGENTS.md` — mandato defensivo permanente
-- `.openhands/microagents/` — skills de auditoría / secretos
-- `.openhands/hooks/` — bloqueo de herramientas ofensivas + log
-- `config/config.toml` — referencia LLM/agente/seguridad
-- `reports/TEMPLATE.md` — plantilla de informe
 
 ## Ética
 
-Solo en sistemas y repos que administras o con autorización explícita. Este proyecto es para **defensa** (revisión, hardening, secretos, deps), no para ataque.
+Solo en sistemas/repos que administras o con autorización. **Defensa** (revisión, secretos, misconfigs, remediación): no exploits ni PoCs.
 
 ## Licencia
 
-MIT — ver [LICENSE](LICENSE).
+MIT — [LICENSE](LICENSE).
