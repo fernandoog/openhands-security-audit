@@ -4,25 +4,30 @@ Agente **local** de auditoría de seguridad **defensiva** (Python + Ollama). Sin
 
 Calibrado para PCs modestos (p. ej. Intel N100 · ~8 GiB · sin GPU).
 
-## Uso
+## Instalación (aplicación del sistema)
 
 ```bash
 git clone https://github.com/fernandoog/openhands-security-audit.git
 cd openhands-security-audit
 ./install.sh
-./bin/audit-local.sh /ruta/al/proyecto
-./bin/audit-fast.sh /ruta/al/proyecto    # sin LLM
 ```
 
-Tras instalar: `oh-audit`, `oh-audit-fast`, `oh-audit-status`.
+Queda en el menú de aplicaciones como **Auditoría IA Local**, con icono y lanzador en terminal.
 
-Informes en `reports/AUDIT-*.md`.
+| Qué | Dónde |
+|-----|--------|
+| App / datos | `~/.local/share/oh-security-audit` |
+| Menú | Auditoría IA Local |
+| Comando | `oh-security-audit` |
+| Atajos | `oh-audit`, `oh-audit-fast`, `oh-audit-status` |
+| Informes | `~/.local/share/oh-security-audit/reports/` |
 
-| Comando | Qué hace |
-|---------|----------|
-| `audit-local.sh` | Escaneo determinista + narración Ollama |
-| `audit-fast.sh` | Solo heurísticas |
-| `audit-local.sh --react` | Bucle ReAct (mejor con qwen coder) |
+```bash
+oh-security-audit              # menú TUI
+oh-security-audit local ~/Dv/mi-proyecto
+oh-security-audit fast .
+./uninstall.sh                 # quitar del sistema
+```
 
 Modelo por defecto: `dolphin-phi`. Opcional: `qwen2.5-coder:1.5b` en `config/hardware.env`.
 

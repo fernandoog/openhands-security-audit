@@ -1,0 +1,166 @@
+#!/usr/bin/env bash
+# Aplicación TUI — auditoría defensiva local (Ollama)
+set -euo pipefail
+
+resolve_root() {
+  local here
+  here="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")")" && pwd)"
+  if [[ -x "$here/audit-local.sh" ]]; then
+    echo "$(cd "$here/.." && pwd)"
+    return
+  fi
+  local share="${XDG_DATA_HOME:-$HOME/.local/share}/oh-security-audit"
+  if [[ -x "$share/bin/audit-local.sh" ]]; then
+    echo "$share"
+    return
+  fi
+  echo "$(cd "$here/.." && pwd)"
+}
+
+ROOT="$(resolve_root)"
+BIN="$ROOT/bin"
+VERSION="1.2.0"
+OUT_DIR="${OH_AUDIT_REPORTS:-$ROOT/reports}"
+mkdir -p "$OUT_DIR"
+
+pause() {
+  echo
+  read -r -p "Enter para continuar… " _
+}
+
+pick_target() {
+  local default="${OH_AUDIT_TARGET:-$HOME}"
+  read -r -p "Ruta a auditar [${default}]: " t
+  t="${t:-$default}"
+  t="${t/#\~/$HOME}"
+  if [[ ! -d "$t" ]]; then
+    echo "No es un directorio: $t" >&2
+    return 1
+  fi
+  printf '%s' "$(cd "$t" && pwd)"
+}
+
+ensure_ollama() {
+  if curl -sf http://127.0.0.1:11434/api/tags >/dev/null 2>&1; then
+    return 0
+  fi
+  echo "Ollama no responde. ¿Arranco ollama serve en segundo plano? [s/N]"
+  read -r -p "> " a
+  case "${a:-}" in
+    s|S|y|Y)
+      nohup ollama serve >"$OUT_DIR/ollama-local.log" 2>&1 &
+      for _ in $(seq 1 40); do
+        curl -sf http://127.0.0.1:11434/api/tags >/dev/null && return 0
+        sleep 0.25
+      done
+      echo "No arrancó. Revisa: ollama serve" >&2
+      return 1
+      ;;
+    *) return 1 ;;
+  esac
+}
+
+run_audit() {
+  local mode=$1
+  local target
+  target="$(pick_target)" || return 1
+  echo
+  echo "──────── $mode → $target ────────"
+  ensure_ollama || true
+  case "$mode" in
+    local) "$BIN/audit-local.sh" "$target" --reports "$OUT_DIR" ;;
+    fast) "$BIN/audit-fast.sh" "$target" --reports "$OUT_DIR" ;;
+    no-llm) "$BIN/audit-local.sh" "$target" --no-llm --reports "$OUT_DIR" ;;
+  esac
+  echo
+  echo "Informes: $OUT_DIR"
+  ls -1t "$OUT_DIR"/AUDIT-*.md 2>/dev/null | head -3 || true
+}
+
+menu() {
+  clear 2>/dev/null || true
+  cat <<EOF
+╔════════════════════════════════════════════╗
+║   Auditoría IA Local  v${VERSION}              ║
+║   Defensiva · Ollama · sin Docker          ║
+╚════════════════════════════════════════════╝
+
+  Datos:    ${ROOT}
+  Informes: ${OUT_DIR}
+
+  1) Auditar (híbrido + LLM)
+  2) Auditar rápido (solo heurísticas)
+  3) Auditar sin LLM (mismo que 2 + flags)
+  4) Estado (hardware / Ollama)
+  5) Abrir carpeta de informes
+  6) Manual
+  0) Salir
+
+EOF
+  read -r -p "Elige [0-6]: " choice
+  case "${choice}" in
+    1) run_audit local; pause ;;
+    2) run_audit fast; pause ;;
+    3) run_audit no-llm; pause ;;
+    4) "$BIN/status.sh"; pause ;;
+    5)
+      if command -v xdg-open >/dev/null; then
+        xdg-open "$OUT_DIR" >/dev/null 2>&1 || true
+      fi
+      echo "Informes en: $OUT_DIR"
+      pause
+      ;;
+    6)
+      if [[ -f "$ROOT/MANUAL.md" ]]; then
+        ${PAGER:-less} "$ROOT/MANUAL.md"
+      else
+        echo "Sin MANUAL.md"
+        pause
+      fi
+      ;;
+    0|q|Q) echo "Hasta luego."; exit 0 ;;
+    *) echo "Opción no válida"; sleep 1 ;;
+  esac
+}
+
+usage() {
+  cat <<EOF
+Uso: oh-security-audit [comando] [ruta]
+
+Sin argumentos: menú interactivo (aplicación).
+
+Comandos:
+  local [ruta]   Auditoría híbrida + LLM
+  fast  [ruta]   Solo heurísticas
+  status         Hardware / Ollama
+  reports        Abre carpeta de informes
+  help           Esta ayuda
+EOF
+}
+
+if [[ $# -gt 0 ]]; then
+  case "$1" in
+    local|audit)
+      shift
+      target="${1:-${OH_AUDIT_TARGET:-$PWD}}"
+      ensure_ollama || true
+      exec "$BIN/audit-local.sh" "$target" --reports "$OUT_DIR"
+      ;;
+    fast)
+      shift
+      target="${1:-${OH_AUDIT_TARGET:-$PWD}}"
+      exec "$BIN/audit-fast.sh" "$target" --reports "$OUT_DIR"
+      ;;
+    status) exec "$BIN/status.sh" ;;
+    reports)
+      xdg-open "$OUT_DIR" >/dev/null 2>&1 || echo "$OUT_DIR"
+      exit 0
+      ;;
+    -h|--help|help) usage; exit 0 ;;
+    *) echo "Desconocido: $1" >&2; usage; exit 1 ;;
+  esac
+fi
+
+while true; do
+  menu
+done

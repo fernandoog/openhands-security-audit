@@ -1,21 +1,21 @@
 # Manual
 
-## Instalación
+## Instalación como aplicación
 
 ```bash
 cd ~/Dv/openhands-security-audit
 ./install.sh
-ollama serve   # si no está en marcha
 ```
 
-## Auditar
+Busca en el launcher: **Auditoría IA Local**. También: `oh-security-audit`.
 
 ```bash
-oh-audit .
-oh-audit ~/Dv/mi-proyecto
-oh-audit-fast ~/Dv/mi-proyecto
-oh-audit . --no-llm
+ollama serve   # si no está en marcha
+oh-security-audit
+oh-security-audit local ~/Dv/mi-proyecto
+oh-security-audit fast .
 oh-audit . --model qwen2.5-coder:1.5b --ctx 4096
+./uninstall.sh
 ```
 
 ## Cómo funciona

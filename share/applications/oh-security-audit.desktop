@@ -1,0 +1,26 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Auditoría IA Local
+Name[es]=Auditoría IA Local
+Comment=Auditoría defensiva de código con Ollama (sin Docker)
+Comment[es]=Auditoría defensiva de código con Ollama (sin Docker)
+Exec=xdg-terminal-exec --app-id=oh.security.audit -e oh-security-audit
+Icon=oh-security-audit
+Terminal=false
+Categories=System;Security;Development;
+Keywords=security;audit;ollama;ai;defensive;seguridad;auditoria;
+StartupNotify=true
+Actions=Fast;Status;Reports;
+
+[Desktop Action Fast]
+Name=Auditoría rápida
+Exec=xdg-terminal-exec --app-id=oh.security.audit -e oh-security-audit fast
+
+[Desktop Action Status]
+Name=Estado
+Exec=xdg-terminal-exec --app-id=oh.security.audit -e oh-security-audit status
+
+[Desktop Action Reports]
+Name=Abrir informes
+Exec=oh-security-audit reports
